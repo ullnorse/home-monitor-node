@@ -14,6 +14,12 @@ pub enum AppError {
 
     #[error("i2c was already taken")]
     I2cAlreadyTaken,
+
+    #[error("failed to initialize display")]
+    DisplayInit,
+
+    #[error("failed to draw to display")]
+    DisplayDraw,
 }
 
 pub type Result<T> = core::result::Result<T, AppError>;

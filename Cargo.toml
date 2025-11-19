@@ -72,7 +72,11 @@ embassy-sync = "0.7.2"
 sensirion-rht = "1.2.0"
 embedded-hal = "1"
 embedded-hal-bus = "0.3.0"
-
+ssd1306 = "0.10.0"
+embedded-graphics = "0.8.1"
+display-interface = "0.5.0"
+display-interface-i2c = "0.5.0"
+format_no_std = "1.2.0"
 
 [profile.dev]
 # Rust debug is too slow.
