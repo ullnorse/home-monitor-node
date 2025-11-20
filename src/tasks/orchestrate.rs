@@ -1,7 +1,3 @@
-use defmt::info;
-use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Sender};
-use embassy_time::{Duration, Timer};
-
 use crate::{
     event::{Event, receive_event},
     tasks::display::update_display_text,
@@ -18,8 +14,7 @@ pub async fn orchestrate_task() {
 
 async fn process_event(event: Event) {
     match event {
-        Event::SensorValue(data) => {
-            info!("Received sensor value");
+        Event::SensorReading(data) => {
             update_display_text(data);
         }
     }

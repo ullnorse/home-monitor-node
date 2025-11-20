@@ -1,6 +1,6 @@
 use crate::error::{AppError, Result};
 use esp_hal::{
-    Blocking, DriverMode, assign_resources,
+    Blocking, assign_resources,
     clock::CpuClock,
     i2c::master::{Config as I2cConfig, I2c},
     timer::timg::TimerGroup,

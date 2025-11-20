@@ -1,31 +1,32 @@
-use defmt::info;
-use embassy_sync::{
-    blocking_mutex::raw::CriticalSectionRawMutex, channel::Receiver, signal::Signal,
+use defmt::error;
+use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
+
+use crate::{
+    app::BoardDisplay,
+    core::{display::Display, environment_sensor::EnvironmentReading},
 };
 
-use crate::app::BoardDisplay;
+pub static DISPLAY_TEXT: Signal<CriticalSectionRawMutex, EnvironmentReading> = Signal::new();
 
-pub static DISPLAY_TEXT: Signal<CriticalSectionRawMutex, (f64, f64)> = Signal::new();
-
-pub fn update_display_text(data: (f64, f64)) {
+pub fn update_display_text(data: EnvironmentReading) {
     DISPLAY_TEXT.signal(data);
 }
 
-async fn wait() -> (f64, f64) {
+async fn wait() -> EnvironmentReading {
     DISPLAY_TEXT.wait().await
 }
 
 #[embassy_executor::task]
-pub async fn display_task(mut display: BoardDisplay) {
-    let mut buf = [0u8; 128];
+pub async fn display_task(display: BoardDisplay) {
+    display_loop(display).await
+}
 
+async fn display_loop(mut display: impl Display) {
     loop {
-        let (tempareture, humidity) = wait().await;
+        let reading = wait().await;
 
-        let s = format_no_std::show(&mut buf, format_args!("temp: {}, humidity: {}", tempareture, humidity)).unwrap();
-
-        display.show_text(s);
-
-        info!("Display task - temperature: {}, humidity: {}", tempareture, humidity);
+        if let Err(e) = display.show_environment(reading) {
+            error!("Display task error: {}", e);
+        }
     }
 }

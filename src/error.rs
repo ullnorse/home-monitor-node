@@ -6,9 +6,6 @@ pub enum AppError {
     #[error("failed to spawn embassy task")]
     TaskSpawnFailed(#[from] embassy_executor::SpawnError),
 
-    #[error("sht3x failed to initialize")]
-    Sht3x,
-
     #[error("failed to initialize i2c")]
     I2cConfigError(#[from] esp_hal::i2c::master::ConfigError),
 
@@ -16,10 +13,7 @@ pub enum AppError {
     I2cAlreadyTaken,
 
     #[error("failed to initialize display")]
-    DisplayInit,
-
-    #[error("failed to draw to display")]
-    DisplayDraw,
+    Display,
 }
 
 pub type Result<T> = core::result::Result<T, AppError>;

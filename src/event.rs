@@ -1,5 +1,7 @@
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel};
 
+use crate::core::environment_sensor::EnvironmentReading;
+
 const EVENT_CHANNEL_SIZE: usize = 10;
 
 pub static EVENT_CHANNEL: Channel<CriticalSectionRawMutex, Event, EVENT_CHANNEL_SIZE> =
@@ -15,5 +17,5 @@ pub async fn receive_event() -> Event {
 
 #[derive(Debug, Clone)]
 pub enum Event {
-    SensorValue((f64, f64)),
+    SensorReading(EnvironmentReading),
 }

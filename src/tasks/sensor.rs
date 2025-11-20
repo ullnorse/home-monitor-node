@@ -1,17 +1,20 @@
-use defmt::info;
-use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Sender};
 use embassy_time::{Duration, Timer};
 
-use crate::{app::TempSensor, drivers::sht3x::Reading, event::{Event, send_event}};
-
+use crate::{
+    app::TempSensor,
+    core::environment_sensor::EnvironmentSensor,
+    event::{Event, send_event},
+};
 
 #[embassy_executor::task]
-pub async fn sensor_task(mut sensor: TempSensor) {
-    loop {
-        info!("Sensor task - sending value");
+pub async fn sensor_task(sensor: TempSensor) {
+    sensor_loop(sensor).await;
+}
 
-        if let Ok(Reading {temperature, humidity}) = sensor.single_shot() {
-            send_event(Event::SensorValue((temperature, humidity))).await;
+async fn sensor_loop(mut sensor: impl EnvironmentSensor) {
+    loop {
+        if let Ok(reading) = sensor.read() {
+            send_event(Event::SensorReading(reading)).await;
         }
 
         Timer::after(Duration::from_secs(1)).await;
