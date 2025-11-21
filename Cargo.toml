@@ -74,7 +74,7 @@ embedded-hal = "1"
 embedded-hal-bus = "0.3.0"
 ssd1306 = "0.10.0"
 embedded-graphics = "0.8.1"
-display-interface = "0.5.0"
+display-interface =  { version = "0.5.0", features = ["defmt-03"] }
 display-interface-i2c = "0.5.0"
 format_no_std = "1.2.0"
 

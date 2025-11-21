@@ -2,34 +2,56 @@ use defmt::info;
 use embassy_executor::Spawner;
 use embedded_hal_bus::i2c::AtomicDevice;
 use embedded_hal_bus::util::AtomicCell;
-use esp_hal::Blocking;
+use esp_hal::clock::CpuClock;
 use esp_hal::delay::Delay;
-use esp_hal::i2c::master::I2c;
+use esp_hal::i2c::master::{Config as I2cConfig, I2c};
+use esp_hal::timer::timg::TimerGroup;
+use esp_hal::{Blocking, assign_resources};
 use static_cell::StaticCell;
 
 use crate::drivers::sht3x::Sht3x;
 use crate::drivers::ssd1306::Ssd1306;
 use crate::error::{AppError, Result};
 
-use crate::board::Board;
-use crate::tasks::{display::display_task, orchestrate::orchestrate_task, sensor::sensor_task};
+use crate::tasks::I2cBus;
+use crate::tasks::display::display_task;
+use crate::tasks::orchestrate::orchestrate_task;
+use crate::tasks::sensor::sensor_task;
 
-pub type TempSensor = Sht3x<AtomicDevice<'static, I2c<'static, Blocking>>, Delay>;
-pub type BoardDisplay = Ssd1306<AtomicDevice<'static, I2c<'static, Blocking>>>;
+static I2C_CELL: StaticCell<AtomicCell<I2cBus>> = StaticCell::new();
 
-static I2C_CELL: StaticCell<AtomicCell<I2c<'static, Blocking>>> = StaticCell::new();
+assign_resources! {
+    Resources<'d> {
+        i2c: I2cResources<'d> {
+            i2c0: I2C0,
+            sda: GPIO21,
+            scl: GPIO22,
+        },
+    }
+}
+
+fn init_i2c<'d>(r: I2cResources<'d>) -> Result<I2c<'d, Blocking>> {
+    let i2c = I2c::new(r.i2c0, I2cConfig::default())?
+        .with_scl(r.scl)
+        .with_sda(r.sda);
+
+    Ok(i2c)
+}
 
 pub async fn run(spawner: Spawner) -> Result<()> {
-    let mut board = Board::new()?;
+    let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
+    let peripherals = esp_hal::init(config);
+
+    let resources = split_resources!(peripherals);
+
+    esp_alloc::heap_allocator!(#[esp_hal::ram(reclaimed)] size: 98768);
+
+    let timg0 = TimerGroup::new(peripherals.TIMG0);
+    esp_rtos::start(timg0.timer0);
 
     info!("Embassy initialized!");
 
-    //let radio_init = esp_radio::init().expect("Failed to initialize Wi-Fi/BLE controller");
-    // let (mut _wifi_controller, _interfaces) =
-    //     esp_radio::wifi::new(&radio_init, peripherals.WIFI, Default::default())
-    //         .expect("Failed to initialize Wi-Fi controller");
-
-    let i2c = board.take_i2c()?;
+    let i2c = init_i2c(resources.i2c)?;
     let i2c_cell = I2C_CELL.init(AtomicCell::new(i2c));
 
     let sht3x = Sht3x::new(AtomicDevice::new(i2c_cell), Delay::new());

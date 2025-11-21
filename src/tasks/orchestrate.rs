@@ -1,7 +1,5 @@
-use crate::{
-    event::{Event, receive_event},
-    tasks::display::update_display_text,
-};
+use crate::events::{Event, receive_event};
+use crate::tasks::display::update_display_text;
 
 #[embassy_executor::task]
 pub async fn orchestrate_task() {

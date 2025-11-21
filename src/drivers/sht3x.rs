@@ -1,11 +1,15 @@
-use embedded_hal::{delay::DelayNs, i2c::I2c};
+use embedded_hal::delay::DelayNs;
+use embedded_hal::i2c::I2c;
 use sensirion_rht::{Addr, Device, Repeatability, kind};
 
-use crate::core::environment_sensor::{
-    EnvironmentReading, EnvironmentSensor, EnvironmentSensorError,
-};
+pub enum Sht3xError {
+    Bus,
+    Timeout,
+    InvalidData,
+}
 
-pub struct Reading {
+#[derive(Debug, Clone, Copy)]
+pub struct Sht3xReading {
     pub temperature: f64,
     pub humidity: f64,
 }
@@ -15,7 +19,7 @@ where
     I2C: I2c,
     Delay: DelayNs,
 {
-    device: Device<I2C, Delay, kind::SHT3x>,
+    inner: Device<I2C, Delay, kind::SHT3x>,
 }
 
 impl<I2C, Delay> Sht3x<I2C, Delay>
@@ -25,26 +29,20 @@ where
 {
     pub fn new(i2c: I2C, delay: Delay) -> Self {
         let device = Device::new_sht3x(Addr::A, i2c, delay);
-        Self { device }
+        Self { inner: device }
     }
-}
 
-impl<I2C, Delay> EnvironmentSensor for Sht3x<I2C, Delay>
-where
-    I2C: I2c,
-    Delay: DelayNs,
-{
-    fn read(&mut self) -> Result<EnvironmentReading, EnvironmentSensorError> {
-        self.device
+    pub fn read(&mut self) -> Result<Sht3xReading, Sht3xError> {
+        self.inner
             .single_shot(Repeatability::High)
-            .map(|(t, h)| EnvironmentReading {
-                temperature_c: t.as_celsius(),
-                humidity_rh: h.as_percent(),
+            .map(|(t, h)| Sht3xReading {
+                temperature: t.as_celsius(),
+                humidity: h.as_percent(),
             })
             .map_err(|err| match err {
-                sensirion_rht::Error::I2C(_) => EnvironmentSensorError::Bus,
-                sensirion_rht::Error::Timeout => EnvironmentSensorError::Timeout,
-                sensirion_rht::Error::CRC => EnvironmentSensorError::InvalidData,
+                sensirion_rht::Error::I2C(_) => Sht3xError::Bus,
+                sensirion_rht::Error::Timeout => Sht3xError::Timeout,
+                sensirion_rht::Error::CRC => Sht3xError::InvalidData,
             })
     }
 }

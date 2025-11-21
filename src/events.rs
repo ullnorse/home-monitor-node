@@ -1,6 +1,7 @@
-use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel};
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+use embassy_sync::channel::Channel;
 
-use crate::core::environment_sensor::EnvironmentReading;
+use crate::drivers::sht3x::Sht3xReading;
 
 const EVENT_CHANNEL_SIZE: usize = 10;
 
@@ -17,5 +18,5 @@ pub async fn receive_event() -> Event {
 
 #[derive(Debug, Clone)]
 pub enum Event {
-    SensorReading(EnvironmentReading),
+    SensorReading(Sht3xReading),
 }
