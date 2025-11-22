@@ -14,6 +14,12 @@ pub enum AppError {
 
     #[error("failed to initialize display")]
     Display,
+
+    #[error("esp radio failed to initialize")]
+    EspRadioInitFailed(#[from] esp_radio::InitializationError),
+
+    #[error("esp wifi failed to initialize")]
+    WifiInitFailed(#[from] esp_radio::wifi::WifiError),
 }
 
 pub type Result<T> = core::result::Result<T, AppError>;
