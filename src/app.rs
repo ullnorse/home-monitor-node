@@ -1,9 +1,6 @@
-use core::net::Ipv4Addr;
-use core::str::FromStr;
-
 use defmt::info;
 use embassy_executor::Spawner;
-use embassy_net::{Ipv4Cidr, Stack, StackResources, StaticConfigV4};
+use embassy_net::{Stack, StackResources};
 use embedded_hal_bus::i2c::AtomicDevice;
 use embedded_hal_bus::util::AtomicCell;
 use esp_hal::clock::CpuClock;
@@ -14,7 +11,7 @@ use esp_hal::timer::timg::TimerGroup;
 use esp_hal::{Blocking, assign_resources, ram};
 use esp_radio::Controller;
 use esp_radio::wifi::{AuthMethod, ClientConfig, ModeConfig};
-use static_cell::{StaticCell, make_static};
+use static_cell::StaticCell;
 
 use crate::drivers::sht3x::Sht3x;
 use crate::drivers::ssd1306::Ssd1306;
@@ -23,13 +20,13 @@ use crate::error::{AppError, Result};
 use crate::tasks::I2cBus;
 use crate::tasks::display::display_task;
 use crate::tasks::http_client::http_client_task;
-use crate::tasks::net::{net_monitor_task, net_task};
+use crate::tasks::net::net_task;
 use crate::tasks::orchestrate::orchestrate_task;
 use crate::tasks::sensor::sensor_task;
 use crate::tasks::wifi::wifi_task;
 
-const HOTSPOT_SSID: &str = "Aleksa iPhone";
-const HOTSPOT_PASSWORD: &str = "aleksajecar";
+const HOTSPOT_SSID: &str = "Oblakoder-2.4G";
+const HOTSPOT_PASSWORD: &str = "skidambundujerjevrelo";
 
 static I2C_CELL: StaticCell<AtomicCell<I2cBus>> = StaticCell::new();
 static RADIO_CONTROLLER: StaticCell<Controller> = StaticCell::new();
@@ -70,7 +67,6 @@ pub async fn run(spawner: Spawner) -> Result<()> {
     esp_rtos::start(timg0.timer0);
 
     info!("Embassy initialized!");
-
 
     let radio_controller = RADIO_CONTROLLER.init(esp_radio::init()?);
 
@@ -113,7 +109,6 @@ pub async fn run(spawner: Spawner) -> Result<()> {
     spawner.spawn(sensor_task(sht3x))?;
     spawner.spawn(wifi_task(wifi_controller))?;
     spawner.spawn(net_task(runner))?;
-    spawner.spawn(net_monitor_task(stack))?;
     spawner.spawn(http_client_task(stack))?;
 
     Ok(())

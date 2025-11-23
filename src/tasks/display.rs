@@ -1,29 +1,45 @@
-use defmt::error;
+use defmt::{Format, error};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::signal::Signal;
 
-use crate::drivers::sht3x::Sht3xReading;
 use crate::tasks::DisplayHandle;
+use crate::tasks::wifi::WifiState;
 
-pub static DISPLAY_SIGNAL: Signal<CriticalSectionRawMutex, Sht3xReading> = Signal::new();
+#[derive(Debug, Clone, Copy, Format)]
+pub struct DisplayData {
+    pub temperature: f64,
+    pub humidity: f64,
+    pub wifi_state: WifiState,
+}
 
-pub fn update_display_text(data: Sht3xReading) {
+impl DisplayData {
+    pub fn new(temperature: f64, humidity: f64, wifi_state: WifiState) -> Self {
+        DisplayData {
+            temperature,
+            humidity,
+            wifi_state,
+        }
+    }
+}
+
+static DISPLAY_SIGNAL: Signal<CriticalSectionRawMutex, DisplayData> = Signal::new();
+
+pub fn update_display_text(data: DisplayData) {
     DISPLAY_SIGNAL.signal(data);
 }
 
-async fn wait() -> Sht3xReading {
+async fn wait() -> DisplayData {
     DISPLAY_SIGNAL.wait().await
 }
 
 #[embassy_executor::task]
 pub async fn display_task(mut display: DisplayHandle) {
     loop {
-        let Sht3xReading {
-            temperature,
-            humidity,
-        } = wait().await;
+        let data = wait().await;
 
-        if let Err(e) = display.show_sensor_data(temperature, humidity) {
+        if let Err(e) =
+            display.show_sensor_data(data.temperature, data.humidity, data.wifi_state.into())
+        {
             error!("Display task error: {}", e);
         }
     }

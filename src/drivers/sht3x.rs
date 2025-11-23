@@ -1,7 +1,9 @@
+use defmt::Format;
 use embedded_hal::delay::DelayNs;
 use embedded_hal::i2c::I2c;
 use sensirion_rht::{Addr, Device, Repeatability, kind};
 
+#[derive(Debug, Format)]
 pub enum Sht3xError {
     Bus,
     Timeout,

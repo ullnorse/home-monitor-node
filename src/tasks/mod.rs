@@ -7,11 +7,11 @@ use crate::drivers::sht3x::Sht3x;
 use crate::drivers::ssd1306::Ssd1306;
 
 pub mod display;
+pub mod http_client;
+pub mod net;
 pub mod orchestrate;
 pub mod sensor;
 pub mod wifi;
-pub mod net;
-pub mod http_client;
 
 pub type I2cBus = I2c<'static, Blocking>;
 

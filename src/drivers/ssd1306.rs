@@ -48,6 +48,7 @@ where
         &mut self,
         temperature: f64,
         humidity: f64,
+        wifi_status: &str,
     ) -> Result<(), DisplayError> {
         self.inner.clear_buffer();
 
@@ -78,6 +79,9 @@ where
             Baseline::Top,
         )
         .draw(&mut self.inner)?;
+
+        Text::with_baseline(wifi_status, Point::new(0, 56), value_style, Baseline::Top)
+            .draw(&mut self.inner)?;
 
         self.inner.flush()
     }
