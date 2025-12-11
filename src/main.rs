@@ -16,6 +16,8 @@ esp_bootloader_esp_idf::esp_app_desc!();
 
 #[esp_rtos::main]
 async fn main(spawner: Spawner) {
+    defmt::info!("reset reason: {}", esp_hal::system::reset_reason().unwrap() as usize);
+
     if let Err(e) = app::run(spawner).await {
         error!("Error during app::run - {}", e);
     }

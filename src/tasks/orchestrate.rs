@@ -14,7 +14,6 @@ pub async fn orchestrate_task() {
 
         match event {
             Event::SensorReading(data) => {
-                info!("Received sensor data");
                 update_display_text(DisplayData::new(data.temperature, data.humidity, wifi_state));
                 send_sensor_data(data);
             }

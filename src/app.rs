@@ -20,7 +20,7 @@ use crate::error::{AppError, Result};
 use crate::tasks::I2cBus;
 use crate::tasks::display::display_task;
 use crate::tasks::http_client::http_client_task;
-use crate::tasks::net::net_task;
+use crate::tasks::net::{alive_task, net_task};
 use crate::tasks::orchestrate::orchestrate_task;
 use crate::tasks::sensor::sensor_task;
 use crate::tasks::wifi::wifi_task;
@@ -60,8 +60,8 @@ pub async fn run(spawner: Spawner) -> Result<()> {
 
     let resources = split_resources!(peripherals);
 
+    esp_alloc::heap_allocator!(size: 72 * 1024);
     esp_alloc::heap_allocator!(#[ram(reclaimed)] size: 64 * 1024);
-    esp_alloc::heap_allocator!(size: 36 * 1024);
 
     let timg0 = TimerGroup::new(peripherals.TIMG0);
     esp_rtos::start(timg0.timer0);
@@ -110,6 +110,7 @@ pub async fn run(spawner: Spawner) -> Result<()> {
     spawner.spawn(wifi_task(wifi_controller))?;
     spawner.spawn(net_task(runner))?;
     spawner.spawn(http_client_task(stack))?;
+    spawner.spawn(alive_task())?;
 
     Ok(())
 }

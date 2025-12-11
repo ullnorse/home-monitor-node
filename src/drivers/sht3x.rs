@@ -2,6 +2,7 @@ use defmt::Format;
 use embedded_hal::delay::DelayNs;
 use embedded_hal::i2c::I2c;
 use sensirion_rht::{Addr, Device, Repeatability, kind};
+use serde::Serialize;
 
 #[derive(Debug, Format)]
 pub enum Sht3xError {
@@ -10,7 +11,7 @@ pub enum Sht3xError {
     InvalidData,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct Sht3xReading {
     pub temperature: f64,
     pub humidity: f64,
